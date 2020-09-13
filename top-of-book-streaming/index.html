@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/moment@2.27.0/min/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+    <script type="text/javascript" src="chartjs-plugin-streaming-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pusher/4.1.0/pusher.js"></script>
+    <script type="text/javascript" src="index.js" defer></script>
+  </head>
+  <body>
+    <div>
+        <a href="https://min-api.cryptocompare.com/" target="_blank">Visit <b>CryptoCompare</b> for API keys</a>
+    </div>
+    <br>
+    <form>
+        <label for="enter-api-key">Enter your API key to display chart</label>
+        <input id="enter-api-key" type="text" required>
+        <button id="submit-api-key">Submit</button>
+    </form>
+    <p>The API key is stored locally. This website does not store your API key.<br>
+        If you are using a shared computer, please remember to <b>clear</b> the API key after use.</p>
+    <div>
+        <button id="clear-api-key">Clear API key</button>
+    </div>
+    <div id=canvas-div>
+        <!-- <canvas id="top-of-book-chart">
+            <p>Browser does not support canvas.</p>
+        </canvas> -->
+    </div>
+    <p>Chartjs streaming plugin credit to <a href="https://github.com/nagix" target="_blank">nagix</a><br>
+        Crypto streaming data credit to <a href="https://www.cryptocompare.com/" target="_blank">CryptoCompare</a></p>
+  </body>
+</html>
