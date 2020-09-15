@@ -36,9 +36,11 @@ function displayAPIForm() {
 
     if (localStorage.getItem('apiKey')) {
         form.style.display = 'none';
+        clearBtn.style.display = 'block';
         loadWSSDataAndDisplayCanvas();
     } else {
         form.style.display = 'block';
+        clearBtn.style.display = 'none';
     }
 };
 
@@ -62,7 +64,6 @@ function loadWSSDataAndDisplayCanvas() {
 
     ccStreamer.onmessage = (message) => {
         let data = JSON.parse(message.data);
-        console.log(data);
         if (data['TYPE'] === '500') {
             let info = data['INFO'];
             alert(info + ' Please refresh page for a new entry.')
@@ -108,15 +109,15 @@ function createCanvas() {
             datasets: [{
                 data: [],
                 label: 'Bid',
-                borderColor: 'rgb(54, 162, 235)', // line color
-                backgroundColor: 'rgba(54, 162, 235, 0.5)', // fill color
+                borderColor: 'rgb(0, 255, 0)', // line color
+                backgroundColor: 'rgba(0, 255, 0, 0.5)', // fill color
                 fill: false,                      // no fill
                 lineTension: 0                    // straight line
             }, {
                 data: [],
                 label: 'Ask',
-                borderColor: 'rgb(255, 99, 132)', // line color
-                backgroundColor: 'rgba(255, 99, 132, 0.5)', // fill color
+                borderColor: 'rgb(255, 0, 0)', // line color
+                backgroundColor: 'rgba(255, 0, 0, 0.5)', // fill color
                 fill: false,                      // no fill
                 lineTension: 0                    // straight line
             }]
