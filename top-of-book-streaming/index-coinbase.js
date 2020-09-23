@@ -1,7 +1,5 @@
-const form = document.querySelector('form');
-const apiKeyInput = document.querySelector('#enter-api-key');
-const submitBtn = document.querySelector('#submit-api-key');
-const clearBtn = document.querySelector('#clear-api-key');
+const launchChartBtn = document.querySelector('#launch-chart');
+const closeChartBtn = document.querySelector('#close-chart');
 const canvasDiv = document.querySelector('#canvas-div');
 const canvasID = 'top-of-book-chart';
 
@@ -17,76 +15,85 @@ window.onresize = function() {
     canvasDiv.style.height = winHeight * 0.8 + 'px';
 }
 
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
+launchChartBtn.addEventListener('click', () => {
+    launchChartBtn.style.display = 'none';
+    closeChartBtn.style.display = 'block';
+
+    loadWSSDataAndDisplayCanvas();
 });
 
-submitBtn.addEventListener('click', () => {
-    localStorage.setItem('apiKey', apiKeyInput.value);
-    displayAPIForm();
-});
+closeChartBtn.addEventListener('click', () => {
+    launchChartBtn.style.display = 'block';
+    closeChartBtn.style.display = 'none';
 
-clearBtn.addEventListener('click', () => {
-    localStorage.removeItem('apiKey');
-    displayAPIForm();
     removeCanvasAndCloseConnections();
 });
 
-function displayAPIForm() {
-
-    if (localStorage.getItem('apiKey')) {
-        form.style.display = 'none';
-        clearBtn.style.display = 'block';
-        loadWSSDataAndDisplayCanvas();
-    } else {
-        form.style.display = 'block';
-        clearBtn.style.display = 'none';
-    }
+function displayBtns() {
+    launchChartBtn.style.display = 'block';
+    closeChartBtn.style.display = 'none';
 };
 
 let buf = {};
-let exchange = 'Binance';
+let exchange = 'Coinbase';
 let wssConnections = [];
+let pair = 'BTC-USD'
 
 function loadWSSDataAndDisplayCanvas() {
     buf[exchange] = [[], []];
-    let apiKey = localStorage.getItem('apiKey');
-    let ccStreamer = new WebSocket('wss://streamer.cryptocompare.com/v2?api_key=' + apiKey);
-    wssConnections.push(ccStreamer);
+    let streamer = new WebSocket('wss://ws-feed.pro.coinbase.com');
+    wssConnections.push(streamer);
 
-    ccStreamer.onopen = () => {
+    streamer.onopen = () => {
         let subRequest = {
-            'action': 'SubAdd',
-            'subs': ['30~Binance~BTC~USDT']
+            'type': 'subscribe',
+            'product_ids': [ pair ],
+            'channels': [
+                'heartbeat',
+                {
+                    'name': 'ticker',
+                    'product_ids': [pair]
+                }
+            ]
         };
-        ccStreamer.send(JSON.stringify(subRequest));
+        streamer.send(JSON.stringify(subRequest));
     }
 
-    ccStreamer.onmessage = (message) => {
+    streamer.onmessage = (message) => {
         let data = JSON.parse(message.data);
-        if (data['TYPE'] === '500') {
-            let info = data['INFO'];
-            alert(info + ' Please refresh page for a new entry.')
 
-        } else if (data['TYPE'] === '401') {
-            let info = data['INFO'];
-            alert('CryptoCompare message: ' + info);
-        }
-
-        if (data['TYPE'] === '30') {
-            let topBid = data['BID']
-            let topAsk = data['ASK']
+        if (data['type'] === 'error') {
             
+            console.log(data.message);
+            removeCanvasAndCloseConnections();
+            alert(data.message);
+
+        } else if (data['type'] === 'subscriptions') {
+
+            console.log("Subscribed:" + JSON.stringify(data.channels));
+
+        } else if (data['type'] === 'heartbeat') {
+
+            let time = data.time;
+            console.log('Heartbeat: ' + time);
+
+        };
+
+        if (data['type'] === 'ticker') {
+            let topBid = data['best_bid'];
+            let topAsk = data['best_ask'];
+            let timestamp = Date.parse(data['time']);
+
             if (topBid) {
                 buf[exchange][0].push({
-                    x: topBid[0]["REPORTEDNS"] / 1000000,
-                    y: topBid[0]["P"]
+                    x: timestamp,
+                    y: topBid
                 });
             }
             if (topAsk) {
                 buf[exchange][1].push({
-                    x: topAsk[0]["REPORTEDNS"] / 1000000,
-                    y: topAsk[0]["P"]
+                    x: timestamp,
+                    y: topAsk
                 });
             }
         }
@@ -124,7 +131,7 @@ function createCanvas() {
         },
         options: {
             title: {
-                text: 'Binance BTC/USDT top of book', // chart title
+                text: exchange + pair + 'top of book', // chart title
                 display: true
             },
             scales: {
@@ -150,10 +157,35 @@ function createCanvas() {
     });    
 }
 
+function unsubscribe(wssConnections) {
+
+    let unsubscribeRequest = {
+        'type': 'unsubscribe',
+        'product_ids': [ pair ],
+        'channels': [
+            'heartbeat',
+            {
+                'name': 'ticker',
+                'product_ids': [pair]
+            }
+        ]
+    };
+
+    wssConnections.forEach(conn => {
+
+        conn.send(JSON.stringify(unsubscribeRequest));
+        conn.close();
+    });
+
+    console.log('WSS connections closed')
+};
+
 function removeCanvasAndCloseConnections() {
     let canvas = document.querySelector('#' + canvasID);
     canvasDiv.removeChild(canvas);
-    wssConnections.forEach(conn => conn.close());
+
+    unsubscribe(wssConnections);
+
 };
 
-document.body.onload = displayAPIForm;
+document.body.onload = displayBtns;
