@@ -46,6 +46,7 @@ function displayAPIForm() {
 
 let buf = {};
 let exchange = 'Binance';
+let pair = 'BTC~USDT';
 let wssConnections = [];
 
 function loadWSSDataAndDisplayCanvas() {
@@ -57,7 +58,7 @@ function loadWSSDataAndDisplayCanvas() {
     ccStreamer.onopen = () => {
         let subRequest = {
             'action': 'SubAdd',
-            'subs': ['30~Binance~BTC~USDT']
+            'subs': [`30~${exchange}~${pair}`]
         };
         ccStreamer.send(JSON.stringify(subRequest));
     }
@@ -124,7 +125,7 @@ function createCanvas() {
         },
         options: {
             title: {
-                text: 'Binance BTC/USDT top of book', // chart title
+                text: `${exchange} ${pair} top of book`, // chart title
                 display: true
             },
             scales: {

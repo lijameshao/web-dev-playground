@@ -52,7 +52,7 @@ function loadWSSDataAndDisplayCanvas() {
                 'heartbeat',
                 {
                     'name': 'ticker',
-                    'product_ids': [pair]
+                    'product_ids': [ pair ]
                 }
             ]
         };
@@ -131,7 +131,7 @@ function createCanvas() {
         },
         options: {
             title: {
-                text: exchange + pair + 'top of book', // chart title
+                text: `${exchange} ${pair} top of book`, // chart title
                 display: true
             },
             scales: {
