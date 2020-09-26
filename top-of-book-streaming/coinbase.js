@@ -1,58 +1,104 @@
-const launchChartBtn = document.querySelector('#launch-chart');
 const closeChartBtn = document.querySelector('#close-chart');
 const canvasDiv = document.querySelector('#canvas-div');
 const canvasID = 'top-of-book-chart';
+const searchInput = document.querySelector('#searchInput');
+const dropBtn = document.querySelector('.dropBtn');
+const dropDownList = document.querySelector('#dropDownList');
+const dropDownOptions = document.querySelectorAll('#dropDownList option');
 
 let winWidth = window.innerWidth;
 let winHeight = window.innerHeight;
 canvasDiv.style.width = winWidth * 0.8 + 'px';
 canvasDiv.style.height = winHeight * 0.8 + 'px';
-
 window.onresize = function() {
     winWidth = window.innerWidth;
     winHeight = window.innerHeight;
     canvasDiv.style.width = winWidth * 0.8 + 'px';
     canvasDiv.style.height = winHeight * 0.8 + 'px';
-}
+};
 
-launchChartBtn.addEventListener('click', () => {
-    launchChartBtn.style.display = 'none';
-    closeChartBtn.style.display = 'block';
+dropBtn.addEventListener('click', showDropList);
+searchInput.addEventListener('keyup', filterOptions);
 
-    loadWSSDataAndDisplayCanvas();
-});
+for (let i=0; i < dropDownOptions.length; i++) {
+    dropDownOptions[i].addEventListener('click', () => {
+
+        dropDownList.classList.toggle('show');
+        dropBtn.style.display = 'none';
+        closeChartBtn.style.display = 'block';
+        
+        optionClick(dropDownOptions[i]);
+        
+    });
+};
 
 closeChartBtn.addEventListener('click', () => {
-    launchChartBtn.style.display = 'block';
+    dropBtn.style.display = 'block';
     closeChartBtn.style.display = 'none';
 
     removeCanvasAndCloseConnections();
 });
 
+function showDropList() {
+    document.querySelector('#dropDownList').classList.toggle('show');
+};
+
+function optionClick(opt) {
+    pair = opt.value;
+    console.log('Streaming ' + pair);
+    loadWSSDataAndDisplayCanvas(pair);
+};
+
+function filterOptions() {
+
+    let input, filter, options, i;
+
+    input = document.querySelector('#searchInput');
+    filter = input.value.toUpperCase();
+    options = document.querySelectorAll('#dropDownList option');
+    
+    for (i = 0; i < options.length; i++) {
+        txtValue = options[i].textContent || options[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            options[i].style.display = '';
+        } else {
+            options[i].style.display = 'none';
+        }
+    }
+};
+
 function displayBtns() {
-    launchChartBtn.style.display = 'block';
+    dropBtn.style.display = 'block';
     closeChartBtn.style.display = 'none';
 };
 
 let buf = {};
 let exchange = 'Coinbase';
-let wssConnections = [];
-let pair = 'BTC-USD'
+let streamerObj = {};
 
-function loadWSSDataAndDisplayCanvas() {
+function unMapPair(pair) {
+    return pair.replace("_", "-");
+};
+
+function loadWSSDataAndDisplayCanvas(pair) {
+
+    unMappedPair = unMapPair(pair);
+
     buf[exchange] = [[], []];
     let streamer = new WebSocket('wss://ws-feed.pro.coinbase.com');
-    wssConnections.push(streamer);
+    
+    streamerObj["streamer"] = streamer;
+    streamerObj["pair"] = unMappedPair;
 
     streamer.onopen = () => {
         let subRequest = {
             'type': 'subscribe',
-            'product_ids': [ pair ],
+            'product_ids': [ unMappedPair ],
             'channels': [
                 'heartbeat',
                 {
                     'name': 'ticker',
-                    'product_ids': [ pair ]
+                    'product_ids': [ unMappedPair ]
                 }
             ]
         };
@@ -99,10 +145,10 @@ function loadWSSDataAndDisplayCanvas() {
         }
     }
 
-    createCanvas();
-}
+    createCanvas(pair);
+};
 
-function createCanvas() {
+function createCanvas(pair) {
 
     let canvas = document.createElement("canvas");
     canvas.id = canvasID;
@@ -154,28 +200,25 @@ function createCanvas() {
                 }
             }
         }
-    });    
-}
+    })
+};
 
-function unsubscribe(wssConnections) {
+function unsubscribe(streamerObj) {
 
     let unsubscribeRequest = {
         'type': 'unsubscribe',
-        'product_ids': [ pair ],
+        'product_ids': [ streamerObj.pair ],
         'channels': [
             'heartbeat',
             {
                 'name': 'ticker',
-                'product_ids': [pair]
+                'product_ids': [ streamerObj.pair ]
             }
         ]
     };
 
-    wssConnections.forEach(conn => {
-
-        conn.send(JSON.stringify(unsubscribeRequest));
-        conn.close();
-    });
+    streamerObj.streamer.send(JSON.stringify(unsubscribeRequest));
+    streamerObj.streamer.close();
 
     console.log('WSS connections closed')
 };
@@ -184,7 +227,7 @@ function removeCanvasAndCloseConnections() {
     let canvas = document.querySelector('#' + canvasID);
     canvasDiv.removeChild(canvas);
 
-    unsubscribe(wssConnections);
+    unsubscribe(streamerObj);
 
 };
 
