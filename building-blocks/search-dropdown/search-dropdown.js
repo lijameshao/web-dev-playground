@@ -1,6 +1,7 @@
 
 const searchInput = document.querySelector('#searchInput');
 const dropBtn = document.querySelector('.dropBtn');
+const dropDownList = document.querySelector('#dropDownList');
 const dropDownOptions = document.querySelectorAll('#dropDownList option');
 
 dropBtn.addEventListener('click', showDropList);
@@ -10,17 +11,18 @@ for (let i=0; i < dropDownOptions.length; i++) {
     dropDownOptions[i].addEventListener('click', () => {
         optionClick(dropDownOptions[i]);
     });
-}
+};
 
 function showDropList() {
-    document.querySelector('#dropDownList').classList.toggle('show');
-}
+    dropDownList.classList.toggle('show');
+};
 
 function optionClick(opt) {
+    dropDownList.classList.toggle('show');
     optValue = opt.value;
     alert(optValue);
     console.log(optValue);
-}
+};
 
 function filterOptions() {
 
@@ -38,4 +40,4 @@ function filterOptions() {
             options[i].style.display = 'none';
         }
     }
-}
+};
