@@ -1,0 +1,20 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Resources" : {
+        "CloudFrontOriginAccessIdentity": {
+            "Type" : "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+            "Properties": {
+                "CloudFrontOriginAccessIdentityConfig": {
+                    "Comment": "access-identity-for-s3-buckets"
+                }
+            }
+        }
+    },
+
+    "Outputs": {
+        "OriginAccessIdentityID" : {
+            "Value": { "Ref" : "CloudFrontOriginAccessIdentity" },
+            "Description" : "The ID for the newly created CloudFront Origin Access Identity"
+        }
+    }
+}
