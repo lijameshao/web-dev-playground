@@ -11,10 +11,6 @@
     "S3BucketIndexDocument" : {
       "Type" : "String",
       "Description" : "The name of your S3 bucket index document, e.g. index.html" 
-    },
-    "CloudFrontOAIID" : {
-      "Type" : "String",
-      "Description" : "The CloudFront Origin Access Identity ID to access the S3 bucket"
     }
   },
 
@@ -43,6 +39,16 @@
   },
 
   "Resources" : {
+
+    "CloudFrontOriginAccessIdentity": {
+      "Type" : "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+      "Properties": {
+        "CloudFrontOriginAccessIdentityConfig": {
+          "Comment": { "Fn::Join" : [ "", [ "access-identity-", {"Ref" : "S3BucketName"}, ".s3.amazonaws.com"]]}
+        }
+      }
+    },
+
     "S3BucketForWebsiteContent" : {
       "Type" : "AWS::S3::Bucket",
       "DeletionPolicy": "Retain",
@@ -73,7 +79,7 @@
               "Effect": "Allow",
               "Principal": {
               "AWS": { "Fn::Join" : [ "", ["arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ",
-                    { "Ref" : "CloudFrontOAIID" } ] ]
+                    { "Ref" : "CloudFrontOriginAccessIdentity" } ] ]
                   }
                 },
             "Action": "s3:GetObject",
@@ -107,7 +113,7 @@
               "S3OriginConfig" : {
                 "OriginAccessIdentity" : { 
                   "Fn::Join" : [
-                    "", [ "origin-access-identity/cloudfront/",  {"Ref": "CloudFrontOAIID"} ]
+                    "", [ "origin-access-identity/cloudfront/",  {"Ref": "CloudFrontOriginAccessIdentity"} ]
                   ]
                 }
               }
@@ -125,6 +131,10 @@
     "BucketName" : {
       "Value" : { "Ref" : "S3BucketForWebsiteContent" },
       "Description" : "Name of S3 bucket to host static website"
-    }
+    },
+    "OriginAccessIdentityID" : {
+      "Value": { "Ref" : "CloudFrontOriginAccessIdentity" },
+      "Description" : "CloudFront Origin Access Identity ID"
+    }    
   }
 }
